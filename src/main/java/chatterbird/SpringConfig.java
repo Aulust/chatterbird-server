@@ -102,7 +102,7 @@ public class SpringConfig {
 
   @Bean(name = "tcpSocketAddress")
   public InetSocketAddress tcpPort() {
-    return new InetSocketAddress(tcpPort);
+    return new InetSocketAddress("0.0.0.0", tcpPort);
   }
 
   @Bean(name = "stringEncoder")
