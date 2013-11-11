@@ -23,13 +23,6 @@ import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 public class XhrSendTransport extends MessageToMessageCodec<HttpMessage, OutboundFrame> {
   @Override
   protected void encode(ChannelHandlerContext ctx, OutboundFrame msg, List<Object> out) throws Exception {
-    /*ConnectionInfo info = ctx.channel().attr(Router.STATE).get();
-
-    FullHttpResponse response = new DefaultFullHttpResponse(info.httpVersion, OK, msg.getData());
-    response.headers().set(CONTENT_LENGTH, response.content().readableBytes());
-    response.headers().set(CONTENT_TYPE, "application/javascript; charset=UTF-8");
-    Utils.enrichHeaders(response.headers(), info);
-    out.add(response);*/
   }
 
   @Override
@@ -48,6 +41,7 @@ public class XhrSendTransport extends MessageToMessageCodec<HttpMessage, Outboun
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+    //TODO: Handle exception properly
     cause.printStackTrace();
   }
 }

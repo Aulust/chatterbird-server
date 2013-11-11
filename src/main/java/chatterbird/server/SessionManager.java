@@ -54,6 +54,7 @@ public class SessionManager extends SimpleChannelInboundHandler<InboundFrame> {
       try {
         session.sendMessage(objectMapper.writeValueAsString(ImmutableMap.<String, String>of("queue", name, "message", message)));
       } catch (JsonProcessingException e) {
+        //TODO: Handle exception properly
         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
       }
     }
@@ -65,6 +66,7 @@ public class SessionManager extends SimpleChannelInboundHandler<InboundFrame> {
         try {
           session.sendMessage(objectMapper.writeValueAsString(ImmutableMap.<String, String>of("queue", name, "message", message)));
         } catch (JsonProcessingException e) {
+          //TODO: Handle exception properly
           e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
       }

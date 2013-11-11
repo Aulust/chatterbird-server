@@ -71,7 +71,7 @@ public class Engine {
     return new Runnable() {
           @Override
           public void run() {
-            handler.internalMessage(message);
+            handler.broadcastMessage(message);
           }
         };
   }

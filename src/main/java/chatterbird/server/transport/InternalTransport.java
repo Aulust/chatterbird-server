@@ -57,6 +57,7 @@ public class InternalTransport extends MessageToMessageCodec<HttpMessage, Outbou
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+    //TODO: Handle exception properly
     cause.printStackTrace();
   }
 }

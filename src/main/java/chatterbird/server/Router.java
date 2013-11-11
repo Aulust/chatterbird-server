@@ -1,7 +1,6 @@
 package chatterbird.server;
 
 
-import chatterbird.server.engine.Engine;
 import chatterbird.server.frame.InboundFrame;
 import chatterbird.server.transport.InternalTransport;
 import chatterbird.server.transport.XhrPoolingTransport;
@@ -37,8 +36,6 @@ public class Router extends ChannelInboundHandlerAdapter {
   @Autowired
   @Qualifier("objectMapper")
   private ObjectMapper objectMapper;
-  @Autowired
-  private Engine engine;
   @Autowired
   private XhrPoolingTransport xhrPoolingTransport;
   @Autowired
@@ -114,7 +111,7 @@ public class Router extends ChannelInboundHandlerAdapter {
     } else if (HttpMethod.POST.equals(httpMethod)) {
       if ("xhr".equals(method)) {
         if (!StringUtils.equals(info.handler, method)) {
-          logger.debug(info.sessionId + " session was bound to xhr handler");
+          logger.debug("{} session was bound to xhr handler", info.sessionId);
           ctx.channel().pipeline().replace("transport", "transport", xhrPoolingTransport);
           info.handler = method;
         }
@@ -150,7 +147,7 @@ public class Router extends ChannelInboundHandlerAdapter {
   //}
       } else if ("xhr_send".equals(method)) {
         if (!StringUtils.equals(info.handler, method)) {
-          logger.debug(info.sessionId + " session was bound to xhr send handler");
+          logger.debug("{} session was bound to xhr send handler", info.sessionId);
           ctx.channel().pipeline().replace("transport", "transport", xhrSendTransport);
           info.handler = method;
         }

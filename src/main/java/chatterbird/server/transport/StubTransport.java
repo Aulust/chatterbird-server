@@ -11,17 +11,17 @@ import java.util.List;
 
 @Sharable
 @Component
-public class StubTransport extends MessageToMessageCodec<HttpObject, OutboundFrame>  {
+public class StubTransport extends MessageToMessageCodec<HttpObject, OutboundFrame> {
 
-    @Override
-    protected void encode(ChannelHandlerContext ctx, OutboundFrame msg, List<Object> out) throws Exception {
-        System.out.println("Stub encode");
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
+  @Override
+  protected void encode(ChannelHandlerContext ctx, OutboundFrame msg, List<Object> out) throws Exception {
+    //TODO: Make this useful
+    System.out.println("Stub encode");
+  }
 
-    @Override
-    protected void decode(ChannelHandlerContext ctx, HttpObject msg, List<Object> out) throws Exception {
-        System.out.println("Stub decode");
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
+  @Override
+  protected void decode(ChannelHandlerContext ctx, HttpObject msg, List<Object> out) throws Exception {
+    //TODO: Make this useful
+    System.out.println("Stub decode");
+  }
 }

@@ -11,17 +11,17 @@ import org.springframework.stereotype.Component;
 public class Admin extends Handler {
   @Autowired
   private SessionManager sessionManager;
-  //@Autowired
-  //private UserService userService;
+  @Autowired
+  private UserService userService;
 
   @Override
   public void newClient(String sessionId) {
     Thread.activeCount();
     sendMessage(sessionId, String.valueOf(sessionManager.sessions.size()));
 
-	        //User user = new User(null, "K.siva reddy", "hyderabad");
-	        //Integer id = userService.createUser(user);
-	        //System.out.println("Newly created User Id="+id);
+	        User user = new User(null, "K.siva reddy", "hyderabad");
+	        Integer id = userService.createUser(user);
+	        System.out.println("Newly created User Id="+id);
 	        /*for (User u : userService.getAllUsers())
 	        {
 	            System.out.println(u);
@@ -34,7 +34,7 @@ public class Admin extends Handler {
   }
 
   @Override
-  public void internalMessage(String message) {
+  public void broadcastMessage(String message) {
     //To change body of implemented methods use File | Settings | File Templates.
   }
 }

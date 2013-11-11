@@ -19,12 +19,10 @@ import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timer;
-import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.*;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
-import org.springframework.core.env.Environment;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -33,13 +31,9 @@ import java.util.concurrent.TimeUnit;
 
 
 @Configuration
-@Import({DatabaseConfig.class})
 @ComponentScan({"chatterbird"})
 @PropertySource("classpath:chatterbird.properties")
-public class SpringConfig {
-  @Autowired
-  Environment env;
-
+public class ApplicationConfig {
   @Value("${boss.thread.count}")
   private int bossCount;
   @Value("${worker.thread.count}")
@@ -50,6 +44,14 @@ public class SpringConfig {
   private boolean keepAlive;
   @Value("${so.backlog}")
   private int backlog;
+  @Value("${tpe.corePoolSize}")
+  private int corePoolSize;
+  @Value("${tpe.maximumPoolSize}")
+  private int maximumPoolSize;
+  @Value("${tpe.keepAliveTime}")
+  private int keepAliveTime;
+  @Value("${tpe.queueSize}")
+  private int queueSize;
   @Autowired
   private Router router;
   @Autowired
@@ -77,6 +79,7 @@ public class SpringConfig {
           public void initChannel(SocketChannel ch) throws Exception {
             ChannelPipeline pipeline = ch.pipeline();
 
+            //TODO: Delete this
             pipeline.addLast("logging", new LoggingHandler());
             pipeline.addLast("decoder", new HttpRequestDecoder());
             pipeline.addLast("aggregator", new HttpObjectAggregator(1048576));
@@ -125,8 +128,9 @@ public class SpringConfig {
     return new HashedWheelTimer();
   }
 
-  @Bean(name = "threadPoolExecutor", destroyMethod = "shutdown")
+  @Bean(destroyMethod = "shutdown")
   public ThreadPoolExecutor threadPoolExecutor() {
-    return new ThreadPoolExecutor(2, 2, 1000, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(100));
+    return new ThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, TimeUnit.SECONDS,
+        new ArrayBlockingQueue<Runnable>(queueSize));
   }
 }

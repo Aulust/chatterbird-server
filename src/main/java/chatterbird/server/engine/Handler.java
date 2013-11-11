@@ -12,7 +12,7 @@ public abstract class Handler {
 
   public abstract void newClient(String sessionId);
   public abstract void clientMessage(String sessionId, String message);
-  public abstract void internalMessage(String message);
+  public abstract void broadcastMessage(String message);
 
   @PostConstruct
   private void init() {

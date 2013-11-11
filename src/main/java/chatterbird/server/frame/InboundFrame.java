@@ -30,6 +30,7 @@ public abstract class InboundFrame {
 
   public static MessageFrame messageFrame(String sessionId, String data) {
     Map<String, String> messages = new HashMap<String, String>();
+    //TODO: Handle exceptions properly
 
     try {
       JsonNode node = objectMapper.readTree(data);

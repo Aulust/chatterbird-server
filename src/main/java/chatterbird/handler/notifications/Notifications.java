@@ -16,7 +16,7 @@ public class Notifications extends Handler {
   }
 
   @Override
-  public void internalMessage(String message) {
+  public void broadcastMessage(String message) {
     sendMessageConnected(message);
   }
 }

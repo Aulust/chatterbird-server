@@ -4,19 +4,22 @@ import chatterbird.server.frame.InboundFrame;
 import chatterbird.server.frame.OutboundFrame;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
 import java.net.InetSocketAddress;
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 @Component
 public class Server {
+  private static final Logger logger = LoggerFactory.getLogger(Server.class);
+
 	@Autowired
 	@Qualifier("serverBootstrap")
-	private ServerBootstrap b;
+	private ServerBootstrap bootstrap;
 
 	@Autowired
 	@Qualifier("tcpSocketAddress")
@@ -26,36 +29,20 @@ public class Server {
   @Qualifier("objectMapper")
   private ObjectMapper objectMapper;
 
-	private Channel serverChannel;
-
 	@PostConstruct
 	public void start() throws Exception {
     InboundFrame.setObjectMapper(objectMapper);
     OutboundFrame.setObjectMapper(objectMapper);
 
-		System.out.println("Starting server at " + tcpPort);
-		serverChannel = b.bind(tcpPort).sync().channel().closeFuture().sync()
-				.channel();
-	}
-
-	@PreDestroy
-	public void stop() {
-		serverChannel.close();
-	}
-
-	public ServerBootstrap getB() {
-		return b;
-	}
-
-	public void setB(ServerBootstrap b) {
-		this.b = b;
-	}
-
-	public InetSocketAddress getTcpPort() {
-		return tcpPort;
-	}
-
-	public void setTcpPort(InetSocketAddress tcpPort) {
-		this.tcpPort = tcpPort;
+    new Thread(new Runnable() {
+        public void run() {
+          try {
+            logger.info("Starting server at {}", tcpPort);
+            bootstrap.bind(tcpPort).sync().channel().closeFuture().sync().channel().close();
+          } catch (InterruptedException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+          }
+        }
+    }).start();
 	}
 }

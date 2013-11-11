@@ -47,6 +47,7 @@ public class XhrPoolingTransport extends MessageToMessageCodec<HttpMessage, Outb
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+    //TODO: Handle exception properly
     cause.printStackTrace();
   }
 }

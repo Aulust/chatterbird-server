@@ -71,6 +71,7 @@ public class Session {
   public boolean sendMessage(String message) {
     Channel currentChannel = channel.getReference();
     if (messages.offer(message) && currentChannel != null) {
+      //TODO: only one scheduled task needed
       currentChannel.eventLoop().execute(new Runnable() {
         @Override
         public void run() {
@@ -87,7 +88,7 @@ public class Session {
     List<String> preparedMessages = new ArrayList<String>();
     Channel currentChannel = channel.getReference();
 
-    if (currentChannel != null) {
+    if (currentChannel != null && currentChannel.isWritable()) {
       messages.drainTo(preparedMessages);
       currentChannel.writeAndFlush(OutboundFrame.messageFrame(preparedMessages));
     }
@@ -99,7 +100,7 @@ public class Session {
   }
 
   public void heartbeat() {
-    if (this.channel.getStamp() == SessionState.OPEN.getValue()) {
+    if (this.channel.getStamp() == SessionState.OPEN.getValue() && this.channel.getReference().isWritable()) {
       this.channel.getReference().writeAndFlush(OutboundFrame.heartbeatFrame());
     }
   }
