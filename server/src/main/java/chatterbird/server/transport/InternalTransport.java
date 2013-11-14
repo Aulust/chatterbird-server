@@ -3,9 +3,7 @@ package chatterbird.server.transport;
 
 import chatterbird.server.ConnectionInfo;
 import chatterbird.server.Router;
-import chatterbird.server.Utils;
 import chatterbird.server.engine.Engine;
-import chatterbird.server.frame.InboundFrame;
 import chatterbird.server.frame.OutboundFrame;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
@@ -21,12 +19,9 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 import static io.netty.handler.codec.http.HttpHeaders.Names.CONNECTION;
-import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_LENGTH;
-import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
 import static io.netty.handler.codec.http.HttpHeaders.Values.CLOSE;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
-import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 
 @Sharable
 @Component

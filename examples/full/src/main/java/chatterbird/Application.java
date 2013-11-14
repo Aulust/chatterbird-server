@@ -10,7 +10,7 @@ public class Application {
 
 	public static void main(String[] args) {
     logger.info("Starting application context");
-		AbstractApplicationContext ctx = new AnnotationConfigApplicationContext(AMQPConfig.class, ApplicationConfig.class);
+		AbstractApplicationContext ctx = new AnnotationConfigApplicationContext(ApplicationConfig.class);
 		ctx.registerShutdownHook();
 	}
 }

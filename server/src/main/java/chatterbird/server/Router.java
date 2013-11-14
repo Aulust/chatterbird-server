@@ -24,9 +24,7 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 
 import static io.netty.handler.codec.http.HttpHeaders.Names.*;
-import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
-import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
-import static io.netty.handler.codec.http.HttpResponseStatus.OK;
+import static io.netty.handler.codec.http.HttpResponseStatus.*;
 
 @Component
 @ChannelHandler.Sharable

@@ -4,10 +4,7 @@ package chatterbird.server;
 import io.netty.handler.codec.http.HttpHeaders;
 import org.apache.commons.lang3.StringUtils;
 
-import static io.netty.handler.codec.http.HttpHeaders.Names.CONNECTION;
-import static io.netty.handler.codec.http.HttpHeaders.Names.ACCESS_CONTROL_ALLOW_METHODS;
-import static io.netty.handler.codec.http.HttpHeaders.Names.ACCESS_CONTROL_ALLOW_CREDENTIALS;
-import static io.netty.handler.codec.http.HttpHeaders.Names.ACCESS_CONTROL_ALLOW_ORIGIN;
+import static io.netty.handler.codec.http.HttpHeaders.Names.*;
 
 public class Utils {
   public static void enrichHeaders(HttpHeaders headers, ConnectionInfo info) {

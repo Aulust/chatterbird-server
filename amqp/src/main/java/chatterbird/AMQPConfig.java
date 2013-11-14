@@ -1,9 +1,10 @@
 package chatterbird;
 
 
-import org.springframework.amqp.core.Message;
-import org.springframework.amqp.core.MessageListener;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -12,6 +13,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 
+import java.util.UUID;
 import java.util.concurrent.ThreadPoolExecutor;
 
 @Configuration
@@ -20,12 +22,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class AMQPConfig {
   @Autowired
   private Environment env;
-
-  @Bean(name = "sdsd")
-  public String message() {
-    System.out.println("dsfsdfsdf");
-    return new String("fsdfsadf");
-  }
 
   @Bean
   public MessageListener exampleListener() {
@@ -38,11 +34,10 @@ public class AMQPConfig {
 
   @Bean
   @Autowired
-  public SimpleMessageListenerContainer messageListenerContainer(CachingConnectionFactory connectionFactory, ThreadPoolExecutor threadPoolExecutor) {
-    System.out.println(threadPoolExecutor);
+  public SimpleMessageListenerContainer messageListenerContainer(CachingConnectionFactory connectionFactory, ThreadPoolExecutor threadPoolExecutor, UniquelyNamedQueue queue) {
     SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
     container.setConnectionFactory(connectionFactory);
-    container.setQueueNames("some.queue");
+    container.setQueues(queue);
     container.setTaskExecutor(threadPoolExecutor);
     container.setMessageListener(exampleListener());
 
@@ -50,12 +45,37 @@ public class AMQPConfig {
   }
 
   @Bean
+  @Autowired
+  public RabbitTemplate broadcastBroker(CachingConnectionFactory connectionFactory) {
+    RabbitTemplate broadcastBroker = new RabbitTemplate(connectionFactory);
+    broadcastBroker.setExchange("chatterbird.broadcast");
+    //broadcastBroker.setMessageConverter();
+    return broadcastBroker;
+  }
+
+  @Bean
+  @Autowired
+  public RabbitAdmin rabbitAdmin(CachingConnectionFactory connectionFactory) {
+    RabbitAdmin rabbitAdmin = new RabbitAdmin(connectionFactory);
+    return rabbitAdmin;
+  }
+
+  @Bean
   public CachingConnectionFactory connectionFactory() {
-    System.out.println("dsfsdfsdf");
     CachingConnectionFactory connectionFactory = new CachingConnectionFactory(env.getProperty("amqp.host"));
     connectionFactory.setUsername(env.getProperty("amqp.username"));
     connectionFactory.setPassword(env.getProperty("amqp.password"));
 
     return connectionFactory;
+  }
+
+  @Bean
+  @Autowired
+  public Queue broadcastQueue(RabbitAdmin rabbitAdmin) {
+    //TODO: Bullshit
+    Queue queue = new Queue(env.getProperty("amqp.broadcastPrefix") + UUID.randomUUID().toString(), true, true, true);
+    queue.setAdminsThatShouldDeclare(rabbitAdmin);
+    queue.setShouldDeclare(true);
+    return  queue;
   }
 }
