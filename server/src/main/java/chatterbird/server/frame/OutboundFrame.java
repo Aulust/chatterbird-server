@@ -1,6 +1,6 @@
 package chatterbird.server.frame;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.util.CharsetUtil;
@@ -10,13 +10,7 @@ import java.util.List;
 public abstract class OutboundFrame {
   private static final OpenFrame OPEN_FRAME_OBJ = new OpenFrame();
   private static final HeartbeatFrame HEARTBEAT_FRAME_OBJ = new HeartbeatFrame();
-  //TODO Get rid of this static shit
-  private static ObjectMapper objectMapper;
   protected ByteBuf data;
-
-  public static void setObjectMapper(ObjectMapper objectMapper) {
-    OutboundFrame.objectMapper = objectMapper;
-  }
 
   public static OpenFrame openFrame() {
     return OPEN_FRAME_OBJ;
@@ -26,7 +20,11 @@ public abstract class OutboundFrame {
     return HEARTBEAT_FRAME_OBJ;
   }
 
-  public static MessageFrame messageFrame(List<String> messages) {
+  public static CloseFrame closeFrame(int status, String reason) {
+    return new CloseFrame(status, reason);
+  }
+
+  public static MessageFrame messageFrame(List<JsonNode> messages) {
     return new MessageFrame(messages);
   }
 
@@ -48,15 +46,20 @@ public abstract class OutboundFrame {
     }
   }
 
+  public static class CloseFrame extends OutboundFrame {
+    private CloseFrame(int status, String reason) {
+      data = Unpooled.copiedBuffer("c[" + status + ",\"" + reason + "\"]\n", CharsetUtil.UTF_8);
+    }
+  }
+
   //TODO This fish smells bad
   public static class MessageFrame extends OutboundFrame {
-    private MessageFrame(List<String> messages) {
+    private MessageFrame(List<JsonNode> messages) {
       data = Unpooled.buffer();
       data.writeByte('a');
       data.writeByte('[');
       for (int i = 0; i < messages.size(); i++) {
-        String message = messages.get(i);
-        data.writeBytes(Unpooled.copiedBuffer(message, CharsetUtil.UTF_8));
+        data.writeBytes(Unpooled.copiedBuffer(messages.get(i).toString(), CharsetUtil.UTF_8));
         if (i < messages.size() - 1) {
           data.writeByte(',');
         }

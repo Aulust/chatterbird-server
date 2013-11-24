@@ -14,8 +14,6 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
-import io.netty.handler.codec.string.StringDecoder;
-import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timer;
@@ -79,12 +77,9 @@ public class ApplicationConfig {
           public void initChannel(SocketChannel ch) throws Exception {
             ChannelPipeline pipeline = ch.pipeline();
 
-            //TODO: Delete this
-            pipeline.addLast("logging", new LoggingHandler());
             pipeline.addLast("decoder", new HttpRequestDecoder());
             pipeline.addLast("aggregator", new HttpObjectAggregator(1048576));
             pipeline.addLast("encoder", new HttpResponseEncoder());
-            //p.addLast("deflater", new HttpContentCompressor());
             pipeline.addLast("router", router);
             pipeline.addLast("transport", stubTransport);
             pipeline.addLast("sessionManager", sessionManager);
@@ -108,29 +103,18 @@ public class ApplicationConfig {
     return new InetSocketAddress("0.0.0.0", tcpPort);
   }
 
-  @Bean(name = "stringEncoder")
-  public StringEncoder stringEncoder() {
-    return new StringEncoder();
-  }
-
-  @Bean(name = "stringDecoder")
-  public StringDecoder stringDecoder() {
-    return new StringDecoder();
-  }
-
   @Bean
   public ObjectMapper objectMapper() {
     return new ObjectMapper();
   }
 
-  @Bean(name = "timer")
-  public Timer timer() {
-    return new HashedWheelTimer();
-  }
-
   @Bean(destroyMethod = "shutdown")
   public ThreadPoolExecutor threadPoolExecutor() {
-    return new ThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, TimeUnit.SECONDS,
+    ThreadPoolExecutor threadPoolExecutor =  new ThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, TimeUnit.SECONDS,
         new ArrayBlockingQueue<Runnable>(queueSize));
+
+    threadPoolExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+
+    return threadPoolExecutor;
   }
 }

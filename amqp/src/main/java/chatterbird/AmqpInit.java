@@ -1,10 +1,7 @@
 package chatterbird;
 
 
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.Message;
-import org.springframework.amqp.core.MessageListener;
-import org.springframework.amqp.core.UniquelyNamedQueue;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -26,10 +23,11 @@ public class AmqpInit {
   private RabbitAdmin rabbitAdmin;
   @Autowired
   private UniquelyNamedQueue broadcastQueue;
+  @Autowired
+  private FanoutExchange broadcastExchange;
 
   @PostConstruct
   public void initQueues() {
-    //rabbitAdmin.declareQueue(broadcastQueue);
-    //rabbitAdmin.declareBinding(new Binding());
+    BindingBuilder.bind(broadcastQueue).to(broadcastExchange);
   }
 }

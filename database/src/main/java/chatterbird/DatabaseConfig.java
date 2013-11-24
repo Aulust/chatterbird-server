@@ -75,6 +75,4 @@ public class DatabaseConfig {
   public PersistenceExceptionTranslationPostProcessor exceptionTranslation() {
     return new PersistenceExceptionTranslationPostProcessor();
   }
-
-
 }

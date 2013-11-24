@@ -34,23 +34,30 @@ public class AMQPConfig {
 
   @Bean
   @Autowired
-  public SimpleMessageListenerContainer messageListenerContainer(CachingConnectionFactory connectionFactory, ThreadPoolExecutor threadPoolExecutor, UniquelyNamedQueue queue) {
+  public SimpleMessageListenerContainer messageListenerContainer(CachingConnectionFactory connectionFactory, ThreadPoolExecutor threadPoolExecutor, Queue broadcastQueue) {
     SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
     container.setConnectionFactory(connectionFactory);
-    container.setQueues(queue);
+    container.setQueues(broadcastQueue);
     container.setTaskExecutor(threadPoolExecutor);
     container.setMessageListener(exampleListener());
 
     return container;
   }
 
-  @Bean
+  /*@Bean
   @Autowired
   public RabbitTemplate broadcastBroker(CachingConnectionFactory connectionFactory) {
     RabbitTemplate broadcastBroker = new RabbitTemplate(connectionFactory);
     broadcastBroker.setExchange("chatterbird.broadcast");
     //broadcastBroker.setMessageConverter();
     return broadcastBroker;
+  }*/
+
+  @Bean
+  public FanoutExchange broadcastExchange() {
+    FanoutExchange broadcastExchange = new FanoutExchange("chatterbird.broadcast");
+    broadcastExchange.setShouldDeclare(false);
+    return broadcastExchange;
   }
 
   @Bean
@@ -72,10 +79,9 @@ public class AMQPConfig {
   @Bean
   @Autowired
   public Queue broadcastQueue(RabbitAdmin rabbitAdmin) {
-    //TODO: Bullshit
+    //TODO: This is bullshit
     Queue queue = new Queue(env.getProperty("amqp.broadcastPrefix") + UUID.randomUUID().toString(), true, true, true);
     queue.setAdminsThatShouldDeclare(rabbitAdmin);
-    queue.setShouldDeclare(true);
     return  queue;
   }
 }

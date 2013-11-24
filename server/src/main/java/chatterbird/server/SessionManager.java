@@ -3,72 +3,73 @@ package chatterbird.server;
 
 import chatterbird.server.engine.Engine;
 import chatterbird.server.frame.InboundFrame;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.util.HashedWheelTimer;
-import io.netty.util.Timeout;
-import io.netty.util.Timer;
-import io.netty.util.TimerTask;
+import io.netty.channel.nio.NioEventLoopGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+
+import static chatterbird.server.engine.Engine.Events;
 
 @Sharable
 @Component
 public class SessionManager extends SimpleChannelInboundHandler<InboundFrame> {
   private static final Logger logger = LoggerFactory.getLogger(SessionManager.class);
   @Autowired
-  @Qualifier("timer")
-  private Timer timer;
+  @Qualifier("workerGroup")
+  private NioEventLoopGroup workerGroup;
   @Autowired
   private Engine engine;
   @Autowired
-  @Qualifier("objectMapper")
-  private ObjectMapper objectMapper;
-  //TODO make this private
-  public ConcurrentHashMap<String, Session> sessions;
+  private MessageConverter messageConverter;
+  private ConcurrentHashMap<String, Session> sessions;
 
-  public SessionManager() {
+  @PostConstruct
+  public void init() {
     sessions = new ConcurrentHashMap<String, Session>();
-    timer = new HashedWheelTimer();
 
-    heartbeatTimeout();
-    sessionTimeout();
+    workerGroup.scheduleAtFixedRate(new Runnable() {
+      @Override
+      public void run() {
+        SessionManager.this.timeout();
+      }
+    }, 5, 5, TimeUnit.SECONDS);
   }
 
-  public void sendMessage(String name, String sessionId, String message) {
+  public int getSessionsCount() {
+    return sessions.size();
+  }
+
+  public void sendMessage(String handler, String sessionId, String event, JsonNode data) {
     Session session = sessions.get(sessionId);
+    ObjectNode msg = messageConverter.convert(handler, event, data);
 
     if (session != null) {
-      try {
-        session.sendMessage(objectMapper.writeValueAsString(ImmutableMap.<String, String>of("queue", name, "message", message)));
-      } catch (JsonProcessingException e) {
-        //TODO: Handle exception properly
-        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-      }
+      session.sendMessage(msg);
+    } else {
+      //TODO: this is temporary hack to prevent connect|disconnect order problem
+      engine.fireEvent(sessionId, handler, Events.DISCONNECT);
     }
   }
 
-  public void sendMessageConnected(String name, String message) {
+  public void sendMessageConnected(String handler, String event, JsonNode data) {
+    ObjectNode msg = messageConverter.convert(handler, event, data);
+
     for (Session session : sessions.values()) {
-      if (session.handlers.contains(name)) {
-        try {
-          session.sendMessage(objectMapper.writeValueAsString(ImmutableMap.<String, String>of("queue", name, "message", message)));
-        } catch (JsonProcessingException e) {
-          //TODO: Handle exception properly
-          e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
+      if (session.handlers.contains(handler)) {
+        session.sendMessage(msg);
       }
     }
   }
@@ -106,46 +107,14 @@ public class SessionManager extends SimpleChannelInboundHandler<InboundFrame> {
       Session session = sessions.get(msg.sessionId);
 
       if (session != null) {
-        session.receiveMessages(message.messages);
+        session.receiveMessages(messageConverter.convert(message.data));
       }
-      logger.debug("Got message {} from session {}", message.messages, message.sessionId);
     }
   }
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
     cause.printStackTrace();
-  }
-
-  private void heartbeatTimeout() {
-    Timeout heartbeatTimeout = timer.newTimeout(new TimerTask() {
-      @Override
-      public void run(Timeout timeout) throws Exception {
-        if (timeout.isCancelled()) {
-          return;
-        }
-        SessionManager.this.heartbeat();
-      }
-    }, 30, TimeUnit.SECONDS);
-  }
-
-  private void sessionTimeout() {
-    Timeout sessionTimeout = timer.newTimeout(new TimerTask() {
-      @Override
-      public void run(Timeout timeout) throws Exception {
-        if (timeout.isCancelled()) {
-          return;
-        }
-        SessionManager.this.timeout();
-      }
-    }, 5, TimeUnit.SECONDS);
-  }
-
-  private void heartbeat() {
-    for (Session session : sessions.values()) {
-      session.heartbeat();
-    }
-    heartbeatTimeout();
   }
 
   private void timeout() {
@@ -160,7 +129,5 @@ public class SessionManager extends SimpleChannelInboundHandler<InboundFrame> {
         entry.getValue().remove();
       }
     }
-
-    sessionTimeout();
   }
 }
