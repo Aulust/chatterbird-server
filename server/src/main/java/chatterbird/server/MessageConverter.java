@@ -63,9 +63,6 @@ public class MessageConverter {
       }
 
       if (message.getNodeType() != JsonNodeType.OBJECT || message.get("handler") == null || message.get("event") == null) {
-        System.out.println(message.getNodeType());
-        System.out.println(message.get("handler"));
-        System.out.println(message.get("event"));
         logger.error("Message has invalid format: {}", message);
         return null;
       }
