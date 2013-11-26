@@ -11,6 +11,10 @@
 
     <artifactId>amqp</artifactId>
 
+    <properties>
+        <spring.rabbit.version>1.2.0.RELEASE</spring.rabbit.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>chatterbird</groupId>
@@ -24,14 +28,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <version>${spring.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.amqp</groupId>
             <artifactId>spring-rabbit</artifactId>
-            <version>1.2.0.RELEASE</version>
+            <version>${spring.rabbit.version}</version>
         </dependency>
     </dependencies>
 

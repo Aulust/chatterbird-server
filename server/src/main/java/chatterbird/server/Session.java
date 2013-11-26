@@ -14,9 +14,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicStampedReference;
-
-import static chatterbird.server.engine.Engine.Events;
 
 /*
  * Possible states:
@@ -36,10 +35,13 @@ public class Session {
   private ScheduledFuture heartbeatTimeout;
   public final String sessionId;
   private final Engine engine;
+  private final int sessionHeartbeat;
+  public AtomicBoolean almostDeleted = new AtomicBoolean(false);
 
-  public Session(String sessionId, Engine engine) {
+  public Session(String sessionId, Engine engine, int sesssionHeartbeat) {
     this.sessionId = sessionId;
     this.engine = engine;
+    this.sessionHeartbeat = sesssionHeartbeat;
 
     channel = new AtomicStampedReference<Channel>(null, SessionState.CONNECTING.getValue());
     messages = new LinkedBlockingQueue<JsonNode>(100);
@@ -48,6 +50,7 @@ public class Session {
 
   public void register(Channel channel) {
     if (this.channel.compareAndSet(null, channel, SessionState.CLOSING.getValue(), SessionState.OPEN.getValue())) {
+      this.almostDeleted.set(false);
       tryFlush();
       return;
     }
@@ -136,7 +139,7 @@ public class Session {
       public void run() {
         Session.this.heartbeat();
       }
-    }, 30, TimeUnit.SECONDS);
+    }, sessionHeartbeat, TimeUnit.SECONDS);
   }
 
   public void heartbeat() {

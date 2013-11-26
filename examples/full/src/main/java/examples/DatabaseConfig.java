@@ -1,4 +1,4 @@
-package chatterbird;
+package examples;
 
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +60,7 @@ public class DatabaseConfig {
 
     LocalSessionFactoryBean sessionFactory = new LocalSessionFactoryBean();
     sessionFactory.setDataSource(getDataSource());
-    sessionFactory.setPackagesToScan("chatterbird");
+    sessionFactory.setPackagesToScan("examples");
     sessionFactory.setHibernateProperties(properties);
 
     return sessionFactory;

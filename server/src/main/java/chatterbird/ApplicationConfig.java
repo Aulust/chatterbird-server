@@ -2,6 +2,7 @@ package chatterbird;
 
 import chatterbird.server.Router;
 import chatterbird.server.SessionManager;
+import chatterbird.server.handler.CloseIdleHandler;
 import chatterbird.server.transport.StubTransport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.bootstrap.ServerBootstrap;
@@ -14,12 +15,13 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
-import io.netty.handler.logging.LoggingHandler;
-import io.netty.util.HashedWheelTimer;
-import io.netty.util.Timer;
+import io.netty.handler.timeout.IdleStateHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 
 import java.net.InetSocketAddress;
@@ -32,16 +34,20 @@ import java.util.concurrent.TimeUnit;
 @ComponentScan({"chatterbird"})
 @PropertySource("classpath:chatterbird.properties")
 public class ApplicationConfig {
+  @Value("${session.timeout}")
+  public int sessionTimeout;
+  @Value("${session.heartbeat}")
+  public int sessionHeartbeat;
   @Value("${boss.thread.count}")
   private int bossCount;
   @Value("${worker.thread.count}")
   private int workerCount;
   @Value("${tcp.port}")
   private int tcpPort;
-  @Value("${so.keepalive}")
-  private boolean keepAlive;
   @Value("${so.backlog}")
   private int backlog;
+  @Value("${idle.timeout}")
+  private int idleTimeout;
   @Value("${tpe.corePoolSize}")
   private int corePoolSize;
   @Value("${tpe.maximumPoolSize}")
@@ -55,6 +61,8 @@ public class ApplicationConfig {
   @Autowired
   private StubTransport stubTransport;
   @Autowired
+  private CloseIdleHandler closeIdleHandler;
+  @Autowired
   private SessionManager sessionManager;
 
   @Bean
@@ -65,18 +73,19 @@ public class ApplicationConfig {
   @SuppressWarnings("unchecked")
   @Bean(name = "serverBootstrap")
   public ServerBootstrap bootstrap() {
-    ServerBootstrap b = new ServerBootstrap();
-    b.group(bossGroup(), workerGroup())
+    ServerBootstrap bootstrap = new ServerBootstrap();
+
+    bootstrap.group(bossGroup(), workerGroup())
         .channel(NioServerSocketChannel.class)
         .option(ChannelOption.SO_BACKLOG, backlog)
         .option(ChannelOption.SO_KEEPALIVE, true)
-        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
-        .childOption(ChannelOption.SO_KEEPALIVE, true)
         .childHandler(new ChannelInitializer<SocketChannel>() {
           @Override
           public void initChannel(SocketChannel ch) throws Exception {
             ChannelPipeline pipeline = ch.pipeline();
 
+            pipeline.addLast("idleState", new IdleStateHandler(0, 0, idleTimeout));
+            pipeline.addLast("idleClose", closeIdleHandler);
             pipeline.addLast("decoder", new HttpRequestDecoder());
             pipeline.addLast("aggregator", new HttpObjectAggregator(1048576));
             pipeline.addLast("encoder", new HttpResponseEncoder());
@@ -85,7 +94,8 @@ public class ApplicationConfig {
             pipeline.addLast("sessionManager", sessionManager);
           }
         });
-    return b;
+
+    return bootstrap;
   }
 
   @Bean(name = "bossGroup", destroyMethod = "shutdownGracefully")
@@ -110,7 +120,7 @@ public class ApplicationConfig {
 
   @Bean(destroyMethod = "shutdown")
   public ThreadPoolExecutor threadPoolExecutor() {
-    ThreadPoolExecutor threadPoolExecutor =  new ThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, TimeUnit.SECONDS,
+    ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, TimeUnit.SECONDS,
         new ArrayBlockingQueue<Runnable>(queueSize));
 
     threadPoolExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());

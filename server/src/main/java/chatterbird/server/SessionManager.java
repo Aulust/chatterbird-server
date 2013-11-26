@@ -1,6 +1,7 @@
 package chatterbird.server;
 
 
+import chatterbird.ApplicationConfig;
 import chatterbird.server.engine.Engine;
 import chatterbird.server.frame.InboundFrame;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,6 +32,8 @@ public class SessionManager extends SimpleChannelInboundHandler<InboundFrame> {
   @Qualifier("workerGroup")
   private NioEventLoopGroup workerGroup;
   @Autowired
+  private ApplicationConfig applicationConfig;
+  @Autowired
   private Engine engine;
   @Autowired
   private MessageConverter messageConverter;
@@ -45,7 +48,7 @@ public class SessionManager extends SimpleChannelInboundHandler<InboundFrame> {
       public void run() {
         SessionManager.this.timeout();
       }
-    }, 5, 5, TimeUnit.SECONDS);
+    }, applicationConfig.sessionTimeout, applicationConfig.sessionTimeout, TimeUnit.SECONDS);
   }
 
   public int getSessionsCount() {
@@ -77,7 +80,7 @@ public class SessionManager extends SimpleChannelInboundHandler<InboundFrame> {
   private Session getOrCreateSession(String sessionId) {
     Session session = sessions.get(sessionId);
     if (session == null) {
-      Session newSession = new Session(sessionId, engine);
+      Session newSession = new Session(sessionId, engine, applicationConfig.sessionHeartbeat);
       session = sessions.putIfAbsent(sessionId, newSession);
       if (session == null) {
         session = newSession;
@@ -122,11 +125,16 @@ public class SessionManager extends SimpleChannelInboundHandler<InboundFrame> {
 
     while (iterator.hasNext()) {
       Map.Entry<String, Session> entry = iterator.next();
+      Session session = entry.getValue();
 
-      if (entry.getValue().channel.compareAndSet(null, null, SessionState.CLOSING.getValue(), SessionState.CLOSED.getValue())) {
+      if (session.channel.getStamp() == SessionState.CLOSING.getValue() && session.almostDeleted.compareAndSet(false, true)) {
+        continue;
+      }
+
+      if (session.channel.compareAndSet(null, null, SessionState.CLOSING.getValue(), SessionState.CLOSED.getValue())) {
         logger.debug("Remove session {}", entry.getKey());
         iterator.remove();
-        entry.getValue().remove();
+        session.remove();
       }
     }
   }

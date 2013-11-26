@@ -1,31 +1,23 @@
-package chatterbird.handler.admin;
+package examples.model;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
-
 @Entity
-public class User {
+public class Vote {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   private Integer id;
   private String name;
-  private String address;
+  private Boolean value;
 
-  public User() {
-  }
+  public Vote() {}
 
-  public User(Integer id, String name, String address) {
-    this.id = id;
+  public Vote(String name, Boolean value) {
     this.name = name;
-    this.address = address;
-  }
-
-  @Override
-  public String toString() {
-    return "User [address=" + address + ", id=" + id + ", name=" + name + "]";
+    this.value = value;
   }
 
   public Integer getId() {
@@ -44,12 +36,11 @@ public class User {
     this.name = name;
   }
 
-  public String getAddress() {
-    return address;
+  public Boolean getValue() {
+    return value;
   }
 
-  public void setAddress(String address) {
-    this.address = address;
+  public void setValue(Boolean value) {
+    this.value = value;
   }
-
 }
