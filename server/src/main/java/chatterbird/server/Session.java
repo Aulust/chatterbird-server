@@ -38,10 +38,10 @@ public class Session {
   private final int sessionHeartbeat;
   public AtomicBoolean almostDeleted = new AtomicBoolean(false);
 
-  public Session(String sessionId, Engine engine, int sesssionHeartbeat) {
+  public Session(String sessionId, Engine engine, int sessionHeartbeat) {
     this.sessionId = sessionId;
     this.engine = engine;
-    this.sessionHeartbeat = sesssionHeartbeat;
+    this.sessionHeartbeat = sessionHeartbeat;
 
     channel = new AtomicStampedReference<Channel>(null, SessionState.CONNECTING.getValue());
     messages = new LinkedBlockingQueue<JsonNode>(100);

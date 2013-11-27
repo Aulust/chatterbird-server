@@ -38,7 +38,6 @@ public class MessageConverter {
 
   public List<ObjectNode> convert(String data) {
     JsonNode node;
-    List<ObjectNode> messages = new ArrayList<ObjectNode>();
 
     try {
       node = objectMapper.readTree(data);
@@ -47,6 +46,13 @@ public class MessageConverter {
       return null;
     }
 
+    return convert(node);
+  }
+
+  public List<ObjectNode> convert(JsonNode node) {
+    List<ObjectNode> messages = new ArrayList<ObjectNode>();
+
+    //TODO: Allow single object
     if (node.getNodeType() != JsonNodeType.ARRAY) {
       logger.error("Request data is not array: {}", node);
       return null;

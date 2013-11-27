@@ -1,5 +1,6 @@
 package examples;
 
+import chatterbird.AMQPConfig;
 import chatterbird.ApplicationConfig;
 import io.netty.bootstrap.ServerBootstrap;
 import org.slf4j.Logger;
@@ -18,7 +19,7 @@ public class Application {
 
   public static void main(String[] args) {
     logger.info("Starting application context");
-    AbstractApplicationContext ctx = new AnnotationConfigApplicationContext(ApplicationConfig.class, Application.class);
+    AbstractApplicationContext ctx = new AnnotationConfigApplicationContext(ApplicationConfig.class, AMQPConfig.class, Application.class);
     ctx.registerShutdownHook();
 
     ServerBootstrap bootstrap = ctx.getBean(ServerBootstrap.class);

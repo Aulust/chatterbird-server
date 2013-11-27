@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.PostConstruct;
 
 public abstract class Handler {
-  private String name;
+  protected String name;
   @Autowired
   private SessionManager sessionManager;
 

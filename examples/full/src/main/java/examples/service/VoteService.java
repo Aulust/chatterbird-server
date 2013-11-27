@@ -17,16 +17,12 @@ public class VoteService {
   @Transactional
   @SuppressWarnings("unchecked")
   public Map<String, Long> countVotes() {
-    Map<String, Long> counts = (Map<String, Long>) sessionFactory.getCurrentSession().createQuery("select new Map(" +
-        "(select count(*) from Vote as vote where vote.value = true) as pos," +
-        "(select count(*) from Vote as vote where vote.value = false) as neg) " +
-        "from Vote").uniqueResult();
+    Long pos = (Long) sessionFactory.getCurrentSession().createQuery("select count(*) from Vote as vote where " +
+        "vote.value = true").uniqueResult();
+    Long neg = (Long) sessionFactory.getCurrentSession().createQuery("select count(*) from Vote as vote where " +
+        "vote.value = false").uniqueResult();
 
-    if (counts == null) {
-      counts = ImmutableMap.of("pos", (long) 0, "neg", (long) 0);
-    }
-
-    return counts;
+    return ImmutableMap.of("pos", pos, "neg", neg);
   }
 
   @Transactional

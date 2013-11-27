@@ -1,7 +1,7 @@
 package examples.handler.voting;
 
+import chatterbird.engine.AmqpAwareHandler;
 import chatterbird.server.engine.EventHandler;
-import chatterbird.server.engine.Handler;
 import chatterbird.server.engine.QueueHandler;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,7 +13,7 @@ import java.util.Map;
 
 @Component
 @QueueHandler(name = "voting")
-public class Voting extends Handler {
+public class Voting extends AmqpAwareHandler {
   @Autowired
   private VoteService voteService;
   @Autowired
@@ -21,17 +21,19 @@ public class Voting extends Handler {
 
   @EventHandler(event = "connect")
   public void connect(String sessionId, JsonNode data) {
-    sendStatus(sessionId);
+    Map<String, Long> counts = voteService.countVotes();
+    sendMessage(sessionId, "status", objectMapper.valueToTree(counts));
   }
 
   @EventHandler(event = "vote")
   public void vote(String sessionId, JsonNode data) {
     voteService.addVote(data.get("name").asText(), data.get("value").asBoolean());
-    sendStatus(sessionId);
+    broadcastEvent("votesChanged");
   }
 
-  private void sendStatus(String sessionId) {
+  @EventHandler(event = "votesChanged")
+  public void votesChanged(String sessionId, JsonNode data) {
     Map<String, Long> counts = voteService.countVotes();
-    sendMessage(sessionId, "status", objectMapper.valueToTree(counts));
+    sendMessageConnected("status", objectMapper.valueToTree(counts));
   }
 }
